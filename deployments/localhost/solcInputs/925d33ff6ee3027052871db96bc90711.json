@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/RockPaperScissors.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.8;\n\ncontract RockPaperScissors {\n    enum State {\n        CREATED,\n        JOINED,\n        COMMITED,\n        REVEALED\n    }\n    struct Game {\n        uint256 id;\n        uint256 bet;\n        address payable[2] players;\n        State state;\n    }\n    struct Move {\n        bytes32 hash;\n        uint256 value;\n    }\n    mapping(uint256 => Game) public games;\n    mapping(uint256 => mapping(address => Move)) public moves;\n    mapping(uint256 => uint256) public winningMoves;\n    uint256 private gameId;\n\n    constructor() {\n        //rock\n        //paper\n        //scissors\n        winningMoves[1] = 3;\n        winningMoves[2] = 1;\n        winningMoves[3] = 2;\n    }\n\n    function createGame(address payable participant) external payable {\n        require(msg.value > 0, \"need to send some ether\");\n        address payable[2] memory players;\n        players[0] = payable(msg.sender);\n        players[1] = participant;\n\n        games[gameId] = Game(gameId, msg.value, players, State.CREATED);\n        gameId++;\n    }\n\n    function joinGame(uint256 _gameId) external payable {\n        Game storage game = games[_gameId];\n        require(game.players[1] == msg.sender, \"sender must be second player\");\n        require(game.state == State.CREATED, \"must be in created state\");\n        require(game.bet <= msg.value, \"not enough ether sent\");\n        if (msg.value > game.bet) {\n            payable(msg.sender).transfer(msg.value - game.bet);\n        }\n        game.state = State.JOINED;\n    }\n\n    function commitMove(\n        uint256 _gameId,\n        uint256 moveId,\n        uint256 salt\n    ) external {\n        Game storage game = games[_gameId];\n        require(game.state == State.JOINED, \"game must be in joined state\");\n        require(\n            game.players[0] == msg.sender || game.players[1] == msg.sender,\n            \"can only be called by one of the players\"\n        );\n        require(\n            moveId == 1 || moveId == 2 || moveId == 3,\n            \"move id must be either 1, 2, 3\"\n        );\n        moves[_gameId][msg.sender] = Move(\n            keccak256(abi.encodePacked(moveId, salt)),\n            0\n        );\n        if (\n            moves[_gameId][game.players[0]].hash != 0 &&\n            moves[_gameId][game.players[1]].hash != 0\n        ) {\n            game.state = State.COMMITED;\n        }\n    }\n\n    function revealMove(\n        uint256 _gameId,\n        uint256 moveId,\n        uint256 salt\n    ) external {\n        Game storage game = games[_gameId];\n        Move storage move1 = moves[_gameId][game.players[0]];\n        Move storage move2 = moves[_gameId][game.players[1]];\n        Move storage moveSender = moves[_gameId][msg.sender];\n        require(game.state == State.COMMITED, \"game must be in commited state\");\n        require(\n            game.players[0] == msg.sender || game.players[1] == msg.sender,\n            \"can only be called by one of the players\"\n        );\n        require(\n            moveSender.hash == keccak256(abi.encodePacked(moveId, salt)),\n            \"moveId does not match commitment\"\n        );\n        moveSender.value = moveId;\n        if (move1.value != 0 && move2.value != 0) {\n            if (move1.value == move2.value) {\n                game.players[0].transfer(game.bet);\n                game.players[1].transfer(game.bet);\n                game.state = State.REVEALED;\n                return;\n            }\n            address payable winner;\n            winner = winningMoves[move1.value] == move2.value\n                ? game.players[0]\n                : game.players[1];\n            winner.transfer(2 * game.bet);\n            game.state = State.REVEALED;\n        }\n    }\n\n    function getGameId() public view returns (uint256) {\n        return gameId;\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
