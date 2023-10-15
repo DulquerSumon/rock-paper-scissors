@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/RockPaperScissors.sol": {
+      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.8;\r\n\r\ncontract RockPaperScissors {\r\n    enum State {\r\n        CREATED,\r\n        JOINED,\r\n        COMMITED,\r\n        REVEALED\r\n    }\r\n    struct Game {\r\n        uint256 id;\r\n        uint256 bet;\r\n        address payable[2] players;\r\n        State state;\r\n    }\r\n    struct Move {\r\n        bytes32 hash;\r\n        uint256 value;\r\n    }\r\n    mapping(uint256 => Game) public games;\r\n    mapping(uint256 => mapping(address => Move)) public moves;\r\n    mapping(uint256 => uint256) public winningMoves;\r\n    uint256 private gameId;\r\n\r\n    constructor() {\r\n        //rock\r\n        //paper\r\n        //scissors\r\n        winningMoves[1] = 3;\r\n        winningMoves[2] = 1;\r\n        winningMoves[3] = 2;\r\n    }\r\n\r\n    function createGame(address payable participant) external payable {\r\n        require(msg.value > 0, \"need to send some ether\");\r\n        address payable[2] memory players;\r\n        players[0] = payable(msg.sender);\r\n        players[1] = participant;\r\n\r\n        games[gameId] = Game(gameId, msg.value, players, State.CREATED);\r\n        gameId++;\r\n    }\r\n\r\n    function joinGame(uint256 _gameId) external payable {\r\n        Game storage game = games[_gameId];\r\n        require(game.players[1] == msg.sender, \"sender must be second player\");\r\n        require(game.state == State.CREATED, \"must be in created state\");\r\n        require(game.bet <= msg.value, \"not enough ether sent\");\r\n        if (msg.value > game.bet) {\r\n            payable(msg.sender).transfer(msg.value - game.bet);\r\n        }\r\n        game.state = State.JOINED;\r\n    }\r\n\r\n    function commitMove(\r\n        uint256 _gameId,\r\n        uint256 moveId,\r\n        uint256 salt\r\n    ) external {\r\n        Game storage game = games[_gameId];\r\n        require(game.state == State.JOINED, \"game must be in joined state\");\r\n        require(\r\n            game.players[0] == msg.sender || game.players[1] == msg.sender,\r\n            \"can only be called by one of the players\"\r\n        );\r\n        require(\r\n            moveId == 1 || moveId == 2 || moveId == 3,\r\n            \"move id must be either 1, 2, 3\"\r\n        );\r\n        moves[_gameId][msg.sender] = Move(\r\n            keccak256(abi.encodePacked(moveId, salt)),\r\n            0\r\n        );\r\n        if (\r\n            moves[_gameId][game.players[0]].hash != 0 &&\r\n            moves[_gameId][game.players[1]].hash != 0\r\n        ) {\r\n            game.state = State.COMMITED;\r\n        }\r\n    }\r\n\r\n    function revealMove(\r\n        uint256 _gameId,\r\n        uint256 moveId,\r\n        uint256 salt\r\n    ) external {\r\n        Game storage game = games[_gameId];\r\n        Move storage move1 = moves[_gameId][game.players[0]];\r\n        Move storage move2 = moves[_gameId][game.players[1]];\r\n        Move storage moveSender = moves[_gameId][msg.sender];\r\n        require(game.state == State.COMMITED, \"game must be in commited state\");\r\n        require(\r\n            game.players[0] == msg.sender || game.players[1] == msg.sender,\r\n            \"can only be called by one of the players\"\r\n        );\r\n        require(\r\n            moveSender.hash == keccak256(abi.encodePacked(moveId, salt)),\r\n            \"moveId does not match commitment\"\r\n        );\r\n        moveSender.value = moveId;\r\n        if (move1.value != 0 && move2.value != 0) {\r\n            if (move1.value == move2.value) {\r\n                game.players[0].transfer(game.bet);\r\n                game.players[1].transfer(game.bet);\r\n                game.state = State.REVEALED;\r\n                return;\r\n            }\r\n            address payable winner;\r\n            winner = winningMoves[move1.value] == move2.value\r\n                ? game.players[0]\r\n                : game.players[1];\r\n            winner.transfer(2 * game.bet);\r\n            game.state = State.REVEALED;\r\n        }\r\n    }\r\n\r\n    function getGameId() public view returns (uint256) {\r\n        return gameId;\r\n    }\r\n}\r\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
