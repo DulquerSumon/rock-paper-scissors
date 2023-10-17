@@ -119,12 +119,14 @@ contract RockPaperScissors {
         if (!success) {
             revert PaymentError();
         }
-        idToGame[gameId.current()] = Game(
+        Game memory game = Game(
             gameId.current(),
             _sAmount,
             players,
             State.CREATED
         );
+        idToGame[gameId.current()] = game;
+        games.push(game);
     }
 
     function joinGame(uint256 _gameId) external payable {
@@ -239,19 +241,26 @@ contract RockPaperScissors {
     function getAvailableGame() public view returns (Game[] memory) {
         uint256 totalGame = gameId.current();
         uint256 availableGame;
-        uint256 currentIndex;
-        for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.CREATED) {
+
+        for (uint256 i = 1; i <= totalGame; i++) {
+            if (games[i].state == State.CREATED) {
                 availableGame += 1;
             }
         }
+
+        if (availableGame == 0) {
+            return new Game[](0);
+        }
+
         Game[] memory gameList = new Game[](availableGame);
-        for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.CREATED) {
-                gameList[currentIndex] = games[i + 1];
+        uint256 currentIndex;
+        for (uint256 i = 1; i <= totalGame; i++) {
+            if (games[i].state == State.CREATED) {
+                gameList[currentIndex] = games[i];
                 currentIndex += 1;
             }
         }
+
         return gameList;
     }
 
@@ -263,7 +272,7 @@ contract RockPaperScissors {
             if (games[i + 1].state == State.JOINED) {
                 if (
                     games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[0] == msg.sender
+                    games[i + 1].players[1] == msg.sender
                 ) {
                     joinedGame += 1;
                 }
@@ -274,7 +283,7 @@ contract RockPaperScissors {
             if (games[i + 1].state == State.JOINED) {
                 if (
                     games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[0] == msg.sender
+                    games[i + 1].players[1] == msg.sender
                 ) {
                     gameList[currentIndex] = games[i + 1];
                     currentIndex += 1;
@@ -292,7 +301,7 @@ contract RockPaperScissors {
             if (games[i + 1].state == State.COMMITED) {
                 if (
                     games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[0] == msg.sender
+                    games[i + 1].players[1] == msg.sender
                 ) {
                     commitedGame += 1;
                 }
@@ -303,7 +312,7 @@ contract RockPaperScissors {
             if (games[i + 1].state == State.COMMITED) {
                 if (
                     games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[0] == msg.sender
+                    games[i + 1].players[1] == msg.sender
                 ) {
                     gameList[currentIndex] = games[i + 1];
                     currentIndex += 1;
