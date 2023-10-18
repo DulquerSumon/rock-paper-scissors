@@ -292,28 +292,24 @@ contract RockPaperScissors {
         return gameList;
     }
 
-    function getPlayersJoinedGamed() public view returns (Game[] memory) {
+    function getPlayersJoinedGamed(
+        address _player
+    ) public view returns (Game[] memory) {
         uint256 totalGame = gameId.current();
         uint256 joinedGame;
         uint256 currentIndex;
         for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.JOINED) {
-                if (
-                    games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[1] == msg.sender
-                ) {
+            if (idToGame[i + 1].players[1] == _player) {
+                if (idToGame[i + 1].state == State.JOINED) {
                     joinedGame += 1;
                 }
             }
         }
         Game[] memory gameList = new Game[](joinedGame);
         for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.JOINED) {
-                if (
-                    games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[1] == msg.sender
-                ) {
-                    gameList[currentIndex] = games[i + 1];
+            if (idToGame[i + 1].players[1] == _player) {
+                if (idToGame[i + 1].state == State.JOINED) {
+                    gameList[currentIndex] = idToGame[i + 1];
                     currentIndex += 1;
                 }
             }
