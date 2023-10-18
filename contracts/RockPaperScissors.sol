@@ -317,15 +317,17 @@ contract RockPaperScissors {
         return gameList;
     }
 
-    function getPlayersComitedGamed() public view returns (Game[] memory) {
+    function getPlayersComitedGamed(
+        address _player
+    ) public view returns (Game[] memory) {
         uint256 totalGame = gameId.current();
         uint256 commitedGame;
         uint256 currentIndex;
         for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.COMMITED) {
+            if (idToGame[i + 1].state == State.COMMITED) {
                 if (
-                    games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[1] == msg.sender
+                    idToGame[i + 1].players[0] == _player ||
+                    idToGame[i + 1].players[1] == _player
                 ) {
                     commitedGame += 1;
                 }
@@ -333,12 +335,12 @@ contract RockPaperScissors {
         }
         Game[] memory gameList = new Game[](commitedGame);
         for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.COMMITED) {
+            if (idToGame[i + 1].state == State.COMMITED) {
                 if (
-                    games[i + 1].players[0] == msg.sender ||
-                    games[i + 1].players[1] == msg.sender
+                    idToGame[i + 1].players[0] == _player ||
+                    idToGame[i + 1].players[1] == _player
                 ) {
-                    gameList[currentIndex] = games[i + 1];
+                    gameList[currentIndex] = idToGame[i + 1];
                     currentIndex += 1;
                 }
             }
