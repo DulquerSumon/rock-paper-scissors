@@ -353,14 +353,14 @@ contract RockPaperScissors {
         uint256 revealedGame;
         uint256 currentIndex;
         for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.REVEALED) {
+            if (idToGame[i + 1].state == State.REVEALED) {
                 revealedGame += 1;
             }
         }
         Game[] memory gameList = new Game[](revealedGame);
         for (uint256 i = 0; i < totalGame; i++) {
-            if (games[i + 1].state == State.REVEALED) {
-                gameList[currentIndex] = games[i + 1];
+            if (idToGame[i + 1].state == State.REVEALED) {
+                gameList[currentIndex] = idToGame[i + 1];
                 currentIndex += 1;
             }
         }
