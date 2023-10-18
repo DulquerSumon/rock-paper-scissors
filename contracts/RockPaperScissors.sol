@@ -264,6 +264,34 @@ contract RockPaperScissors {
         return gameList;
     }
 
+    function getUserCreatedGame(
+        address _user
+    ) public view returns (Game[] memory) {
+        uint256 totalGame = gameId.current();
+        uint256 availableGame;
+
+        for (uint256 i = 0; i < totalGame; i++) {
+            if (idToGame[i + 1].players[0] == _user) {
+                availableGame += 1;
+            }
+        }
+
+        if (availableGame == 0) {
+            return new Game[](0);
+        }
+
+        Game[] memory gameList = new Game[](availableGame);
+        uint256 currentIndex;
+        for (uint256 i = 0; i < totalGame; i++) {
+            if (idToGame[i + 1].players[0] == _user) {
+                gameList[currentIndex] = idToGame[i + 1];
+                currentIndex += 1;
+            }
+        }
+
+        return gameList;
+    }
+
     function getPlayersJoinedGamed() public view returns (Game[] memory) {
         uint256 totalGame = gameId.current();
         uint256 joinedGame;
