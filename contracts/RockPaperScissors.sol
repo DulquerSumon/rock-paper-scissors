@@ -242,8 +242,8 @@ contract RockPaperScissors {
         uint256 totalGame = gameId.current();
         uint256 availableGame;
 
-        for (uint256 i = 1; i <= totalGame; i++) {
-            if (games[i].state == State.CREATED) {
+        for (uint256 i = 0; i < totalGame; i++) {
+            if (idToGame[i + 1].state == State.CREATED) {
                 availableGame += 1;
             }
         }
@@ -254,9 +254,9 @@ contract RockPaperScissors {
 
         Game[] memory gameList = new Game[](availableGame);
         uint256 currentIndex;
-        for (uint256 i = 1; i <= totalGame; i++) {
-            if (games[i].state == State.CREATED) {
-                gameList[currentIndex] = games[i];
+        for (uint256 i = 0; i < totalGame; i++) {
+            if (idToGame[i + 1].state == State.CREATED) {
+                gameList[currentIndex] = idToGame[i + 1];
                 currentIndex += 1;
             }
         }
