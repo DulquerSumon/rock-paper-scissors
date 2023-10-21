@@ -168,9 +168,10 @@ contract RockPaperScissors {
         //     moveId == 1 || moveId == 2 || moveId == 3,
         //     "move id must be either 1, 2, 3"
         // );
-        if (moveId != 1 || moveId != 2 || moveId != 3) {
+        if (moveId != 1 && moveId != 2 && moveId != 3) {
             revert UnapprovedMove();
         }
+
         moves[_gameId][msg.sender] = Move(
             keccak256(abi.encodePacked(moveId, salt)),
             0
