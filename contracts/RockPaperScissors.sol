@@ -67,6 +67,7 @@ contract RockPaperScissors {
     error UnapprovedMove();
     error NotInComittedState();
     error MoveIdNotMatched();
+    error AlreadyClaimed();
 
     using Counters for Counters.Counter;
     enum State {
@@ -89,6 +90,7 @@ contract RockPaperScissors {
     mapping(uint256 => Game) private idToGame;
     Game[] private games;
     mapping(uint256 => mapping(address => Move)) private moves;
+    mapping(address => uint256) private lastClaimedAt;
     mapping(uint256 => uint256) public winningMoves;
     Counters.Counter private gameId;
     IERC20 private tokenContract;
@@ -103,14 +105,20 @@ contract RockPaperScissors {
         tokenContract = IERC20(_tContract);
     }
 
-    function createGame(uint256 _sAmount) external payable {
-        // require(msg.value > 0, "need to send some ether");
+    function claimFreeToken() public {
+        if (lastClaimedAt[msg.sender] > block.timestamp + 1 days) {
+            revert AlreadyClaimed();
+        }
+        lastClaimedAt[msg.sender] = block.timestamp;
+        tokenContract.transfer(msg.sender, 100 * 10 ** 18);
+    }
+
+    function createGame(uint256 _sAmount) public {
         if (_sAmount < 1 || _sAmount == 0) {
             revert LowStakeAmount();
         }
         address[2] memory players;
         players[0] = msg.sender;
-        // players[1] = participant;
         gameId.increment();
         bool success = tokenContract.transferFrom(
             msg.sender,
@@ -133,7 +141,6 @@ contract RockPaperScissors {
 
     function joinGame(uint256 _gameId) external payable {
         Game storage game = idToGame[_gameId];
-        // require(game.state == State.CREATED, "must be in created state");
         if (game.state != State.CREATED) {
             revert NotInCreatedState();
         }
@@ -155,21 +162,12 @@ contract RockPaperScissors {
         uint256 salt
     ) external {
         Game storage game = idToGame[_gameId];
-        // require(game.state == State.JOINED, "game must be in joined state");
         if (game.state != State.JOINED) {
             revert GameIsNotInJoinedState();
         }
-        // require(
-        //     game.players[0] == msg.sender || game.players[1] == msg.sender,
-        //     "can only be called by one of the players"
-        // );
         if (game.players[0] != msg.sender && game.players[1] != msg.sender) {
             revert OnlyPlayersCanCall();
         }
-        // require(
-        //     moveId == 1 || moveId == 2 || moveId == 3,
-        //     "move id must be either 1, 2, 3"
-        // );
         if (moveId != 1 && moveId != 2 && moveId != 3) {
             revert UnapprovedMove();
         }
@@ -195,31 +193,20 @@ contract RockPaperScissors {
         Move memory move1 = moves[_gameId][game.players[0]];
         Move memory move2 = moves[_gameId][game.players[1]];
         Move memory moveSender = moves[_gameId][msg.sender];
-        // require(game.state == State.COMMITED, "game must be in commited state");
         if (game.state != State.COMMITED) {
             revert NotInComittedState();
         }
-        // require(
-        //     game.players[0] == msg.sender || game.players[1] == msg.sender,
-        //     "can only be called by one of the players"
-        // );
         if (game.players[0] != msg.sender && game.players[1] != msg.sender) {
             revert OnlyPlayersCanCall();
         }
-        // require(
-        //     moveSender.hash == keccak256(abi.encodePacked(moveId, salt)),
-        //     "moveId does not match commitment"
-        // );
         if (moveSender.hash != keccak256(abi.encodePacked(moveId, salt))) {
             revert MoveIdNotMatched();
         }
         moveSender.value = moveId;
         if (move1.value != 0 && move2.value != 0) {
             if (move1.value == move2.value) {
-                // game.players[0].transfer(game.bet);
                 tokenContract.transfer(game.players[0], game.stakeAmount);
                 tokenContract.transfer(game.players[1], game.stakeAmount);
-                // game.players[1].transfer(game.bet);
                 game.state = State.REVEALED;
                 return;
             }
@@ -227,7 +214,6 @@ contract RockPaperScissors {
             winner = winningMoves[move1.value] == move2.value
                 ? game.players[0]
                 : game.players[1];
-            // winner.transfer(2 * game.bet);
             tokenContract.transfer(winner, game.stakeAmount);
             game.state = State.REVEALED;
             game.winner = winner;

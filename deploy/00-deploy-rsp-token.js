@@ -11,7 +11,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     waitConfirmations: network.config.blockConfirmations || 1,
   });
-  if (network.config.chainId == 5 && process.env.ETHERSCAN_API_KEY) {
+  if (network.config.chainId == 11155111 && process.env.ETHERSCAN_API_KEY) {
     await verify(rockPaperScissor.address, []);
   }
   console.log(`Contract deployed at : ${rockPaperScissor.address}`);

@@ -5,6 +5,7 @@ const verify = async (contractAddress, args) => {
     await run("verify:verify", {
       address: contractAddress,
       constructorArguments: args,
+      // contract: "contracts/RockPaperScissor.sol:RockPaperScissorCoin",
     });
   } catch (e) {
     if (e.message.toLowerCase().includes("already verified")) {
