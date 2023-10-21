@@ -161,7 +161,7 @@ contract RockPaperScissors {
         //     game.players[0] == msg.sender || game.players[1] == msg.sender,
         //     "can only be called by one of the players"
         // );
-        if (game.players[0] != msg.sender || game.players[1] != msg.sender) {
+        if (game.players[0] != msg.sender && game.players[1] != msg.sender) {
             revert OnlyPlayersCanCall();
         }
         // require(

@@ -248,5 +248,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 contract RockPaperScissorCoin is ERC20 {
     constructor() ERC20("Rock Paper Scissor", "RPS") {
         _mint(msg.sender, 100000000 * 10 ** decimals());
+        _mint(
+            0x70997970C51812dc3A010C7d01b50e0d17dc79C8,
+            100000000 * 10 ** decimals()
+        );
     }
 }
