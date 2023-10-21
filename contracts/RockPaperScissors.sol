@@ -80,6 +80,7 @@ contract RockPaperScissors {
         uint256 stakeAmount;
         address[2] players;
         State state;
+        address winner;
     }
     struct Move {
         bytes32 hash;
@@ -123,7 +124,8 @@ contract RockPaperScissors {
             gameId.current(),
             _sAmount,
             players,
-            State.CREATED
+            State.CREATED,
+            address(0)
         );
         idToGame[gameId.current()] = game;
         games.push(game);
@@ -174,7 +176,7 @@ contract RockPaperScissors {
 
         moves[_gameId][msg.sender] = Move(
             keccak256(abi.encodePacked(moveId, salt)),
-            0
+            salt
         );
         if (
             moves[_gameId][game.players[0]].hash != 0 &&
@@ -201,7 +203,7 @@ contract RockPaperScissors {
         //     game.players[0] == msg.sender || game.players[1] == msg.sender,
         //     "can only be called by one of the players"
         // );
-        if (game.players[0] != msg.sender || game.players[1] != msg.sender) {
+        if (game.players[0] != msg.sender && game.players[1] != msg.sender) {
             revert OnlyPlayersCanCall();
         }
         // require(
@@ -228,6 +230,9 @@ contract RockPaperScissors {
             // winner.transfer(2 * game.bet);
             tokenContract.transfer(winner, game.stakeAmount);
             game.state = State.REVEALED;
+            game.winner = winner;
+        } else {
+            revert("Unkown Salt");
         }
     }
 
@@ -349,7 +354,7 @@ contract RockPaperScissors {
         return gameList;
     }
 
-    function getRevealedGamed() public view returns (Game[] memory) {
+    function getRevealedGames() public view returns (Game[] memory) {
         uint256 totalGame = gameId.current();
         uint256 revealedGame;
         uint256 currentIndex;
